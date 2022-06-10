@@ -17,11 +17,9 @@ import com.facebook.react.bridge.ReactContext;
  * Receiver to record the chosen component when sharing an Intent.
  */
 public class TargetChosenReceiver extends BroadcastReceiver {
-    private static final String EXTRA_RECEIVER_TOKEN = "receiver_token";
     private static final Object LOCK = new Object();
 
     private static String sTargetChosenReceiveAction;
-    private static TargetChosenReceiver sLastRegisteredReceiver;
 
     private static Callback successCallback;
     private static Callback failureCallback;
@@ -41,18 +39,11 @@ public class TargetChosenReceiver extends BroadcastReceiver {
             if (sTargetChosenReceiveAction == null) {
                 sTargetChosenReceiveAction = reactContext.getPackageName() + "/" + TargetChosenReceiver.class.getName() + "_ACTION";
             }
-            Context context = reactContext.getApplicationContext();
-            if (sLastRegisteredReceiver != null) {
-                context.unregisterReceiver(sLastRegisteredReceiver);
-            }
-            sLastRegisteredReceiver = new TargetChosenReceiver();
-            context.registerReceiver(sLastRegisteredReceiver, new IntentFilter(sTargetChosenReceiveAction));
         }
 
         Intent intent = new Intent(sTargetChosenReceiveAction);
         intent.setPackage(reactContext.getPackageName());
         intent.setClass(reactContext.getApplicationContext(), TargetChosenReceiver.class);
-        intent.putExtra(EXTRA_RECEIVER_TOKEN, sLastRegisteredReceiver.hashCode());
         final PendingIntent callback = PendingIntent.getBroadcast(reactContext, 0, intent,
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ?
                 PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE :
@@ -63,15 +54,6 @@ public class TargetChosenReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        synchronized (LOCK) {
-            if (sLastRegisteredReceiver != this) return;
-            context.getApplicationContext().unregisterReceiver(sLastRegisteredReceiver);
-            sLastRegisteredReceiver = null;
-        }
-        if (!intent.hasExtra(EXTRA_RECEIVER_TOKEN) || intent.getIntExtra(EXTRA_RECEIVER_TOKEN, 0) != this.hashCode()) {
-            return;
-        }
-
         ComponentName target = intent.getParcelableExtra(Intent.EXTRA_CHOSEN_COMPONENT);
         if (target != null) {
             sendCallback(true, true, target.flattenToString());

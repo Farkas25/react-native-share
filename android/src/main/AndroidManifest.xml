@@ -11,5 +11,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/share_download_paths" />
         </provider>
+        <receiver android:name=".social.TargetChosenReceiver" android:exported="false"/>
     </application>
 </manifest>
